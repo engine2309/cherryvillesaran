@@ -586,6 +586,79 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.25/dist/sweetalert2.min.js"></script>
     <script>
+      function kirimSaran() {
+        const nama = document.getElementById("nama").value;
+        const blok = document.getElementById("blok").value;
+        const nomor = document.getElementById("nomor").value;
+        const saran = document.getElementById("saran").value;
+    
+        if (nama && blok && nomor && saran) {
+          // Simpan ke Firebase Realtime Database
+          const saranRef = database.ref("saran");
+          saranRef.push({
+            nama: nama,
+            blok: blok,
+            nomor: nomor,
+            saran: saran,
+            status: "unread", // Default status belum dibaca
+            timestamp: new Date().toISOString()
+          });
+    
+          // Tampilkan notifikasi sukses
+          Swal.fire("Saran Terkirim!", "Terima kasih atas masukannya.", "success");
+    
+          // Reset input form
+          document.getElementById("nama").value = "";
+          document.getElementById("blok").value = "";
+          document.getElementById("nomor").value = "";
+          document.getElementById("saran").value = "";
+        } else {
+          Swal.fire("Error!", "Harap isi semua kolom!", "error");
+        }
+      }
+    </script>
+<div class="saran-list" id="saranList"></div>
+
+<script>
+  function loadSaran() {
+    const saranList = document.getElementById("saranList");
+    const saranRef = database.ref("saran");
+
+    saranRef.on("value", (snapshot) => {
+      saranList.innerHTML = ""; // Kosongkan daftar sebelum menambahkan data baru
+      snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        const key = childSnapshot.key;
+
+        // Buat elemen HTML untuk setiap saran
+        const saranItem = document.createElement("div");
+        saranItem.classList.add("saran-item");
+        saranItem.innerHTML = `
+          <p><strong>${data.nama} (Blok ${data.blok}, No. ${data.nomor})</strong></p>
+          <p>${data.saran}</p>
+          <button class="mark-read" onclick="markAsRead('${key}')">Tandai Dibaca</button>
+          <button class="delete" onclick="deleteSaran('${key}')">Hapus</button>
+        `;
+
+        // Tambahkan ke daftar
+        saranList.appendChild(saranItem);
+      });
+    });
+  }
+
+  function markAsRead(key) {
+    database.ref("saran/" + key).update({ status: "read" });
+  }
+
+  function deleteSaran(key) {
+    database.ref("saran/" + key).remove();
+  }
+
+  // Panggil fungsi untuk memuat data
+  loadSaran();
+</script>
+    
+    <script>
       document.addEventListener("DOMContentLoaded", () => {
         tampilkanSaran();
       });
@@ -656,101 +729,6 @@
         localStorage.setItem("saranList", JSON.stringify(saranList));
         tampilkanSaran();
       }
-    </script>
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-analytics.js";
-      // TODO: Add SDKs for Firebase products that you want to use
-      // https://firebase.google.com/docs/web/setup#available-libraries
-    
-      // Your web app's Firebase configuration
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-      const firebaseConfig = {
-        apiKey: "AIzaSyCnUKBBff3RaDuMMhSh_il77t4hklFtV98",
-        authDomain: "cherryvillesaran.firebaseapp.com",
-        projectId: "cherryvillesaran",
-        storageBucket: "cherryvillesaran.firebasestorage.app",
-        messagingSenderId: "489844167879",
-        appId: "1:489844167879:web:85eb99e8201058c71f9ae2",
-        measurementId: "G-CF1REX94KK"
-      };
-    
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-    </script>
-    <script>
-      function kirimSaran() {
-        const nama = document.getElementById("nama").value;
-        const blok = document.getElementById("blok").value;
-        const nomor = document.getElementById("nomor").value;
-        const saran = document.getElementById("saran").value;
-    
-        if (nama && blok && nomor && saran) {
-          // Simpan ke Firebase Realtime Database
-          const saranRef = database.ref("saran");
-          saranRef.push({
-            nama: nama,
-            blok: blok,
-            nomor: nomor,
-            saran: saran,
-            status: "unread", // Default status belum dibaca
-            timestamp: new Date().toISOString()
-          });
-    
-          // Tampilkan notifikasi sukses
-          Swal.fire("Saran Terkirim!", "Terima kasih atas masukannya.", "success");
-    
-          // Reset input form
-          document.getElementById("nama").value = "";
-          document.getElementById("blok").value = "";
-          document.getElementById("nomor").value = "";
-          document.getElementById("saran").value = "";
-        } else {
-          Swal.fire("Error!", "Harap isi semua kolom!", "error");
-        }
-      }
-    </script>
-    <div class="saran-list" id="saranList"></div>
-
-    <script>
-      function loadSaran() {
-        const saranList = document.getElementById("saranList");
-        const saranRef = database.ref("saran");
-    
-        saranRef.on("value", (snapshot) => {
-          saranList.innerHTML = ""; // Kosongkan daftar sebelum menambahkan data baru
-          snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            const key = childSnapshot.key;
-    
-            // Buat elemen HTML untuk setiap saran
-            const saranItem = document.createElement("div");
-            saranItem.classList.add("saran-item");
-            saranItem.innerHTML = `
-              <p><strong>${data.nama} (Blok ${data.blok}, No. ${data.nomor})</strong></p>
-              <p>${data.saran}</p>
-              <button class="mark-read" onclick="markAsRead('${key}')">Tandai Dibaca</button>
-              <button class="delete" onclick="deleteSaran('${key}')">Hapus</button>
-            `;
-    
-            // Tambahkan ke daftar
-            saranList.appendChild(saranItem);
-          });
-        });
-      }
-    
-      function markAsRead(key) {
-        database.ref("saran/" + key).update({ status: "read" });
-      }
-    
-      function deleteSaran(key) {
-        database.ref("saran/" + key).remove();
-      }
-    
-      // Panggil fungsi untuk memuat data
-      loadSaran();
     </script>
     
   </body>
